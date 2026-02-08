@@ -14,7 +14,65 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      follower_snapshots: {
+        Row: {
+          channel_id: string
+          created_at: string
+          error: string | null
+          follower_count: number | null
+          id: string
+          raw_text: string | null
+        }
+        Insert: {
+          channel_id: string
+          created_at?: string
+          error?: string | null
+          follower_count?: number | null
+          id?: string
+          raw_text?: string | null
+        }
+        Update: {
+          channel_id?: string
+          created_at?: string
+          error?: string | null
+          follower_count?: number | null
+          id?: string
+          raw_text?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "follower_snapshots_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "tracked_channels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tracked_channels: {
+        Row: {
+          channel_name: string | null
+          created_at: string
+          id: string
+          is_active: boolean
+          url: string
+        }
+        Insert: {
+          channel_name?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          url: string
+        }
+        Update: {
+          channel_name?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          url?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
