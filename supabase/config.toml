@@ -1,1 +1,4 @@
 project_id = "lwmjvrbkhbvmzmxakmmx"
+
+[functions.analyze-whatsapp-channel]
+verify_jwt = false
