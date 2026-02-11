@@ -33,6 +33,10 @@ jobs:
       - name: Sync Capacitor Android
         run: npx cap sync android
 
+      - name: Enforce Java 17 compatibility
+        run: |
+          sed -i 's/JavaVersion.VERSION_21/JavaVersion.VERSION_17/g' android/app/capacitor.build.gradle
+
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
@@ -86,6 +90,10 @@ jobs:
 
       - name: Sync Capacitor Android
         run: npx cap sync android
+
+      - name: Enforce Java 17 compatibility
+        run: |
+          sed -i 's/JavaVersion.VERSION_21/JavaVersion.VERSION_17/g' android/app/capacitor.build.gradle
 
       - name: Setup Java
         uses: actions/setup-java@v4
