@@ -59,6 +59,7 @@ This project is built with:
 - React
 - shadcn-ui
 - Tailwind CSS
+- Capacitor (for mobile apps)
 
 ## How can I deploy this project?
 
@@ -71,3 +72,26 @@ Yes, you can!
 To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
 
 Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+
+## 📱 Mobile App Development
+
+This project is now mobile-ready with Capacitor! Build native Android and iOS apps from the same codebase.
+
+**Quick start:**
+```sh
+# Build for Android
+npm run cap:sync:android
+npm run cap:open:android
+
+# Build for iOS
+npm run cap:sync:ios
+npm run cap:open:ios
+```
+
+**For complete mobile development documentation, see:**
+- [README_MOBILE.md](./README_MOBILE.md) - Mobile quick start guide
+- [MOBILE_BUILD_GUIDE.md](./MOBILE_BUILD_GUIDE.md) - Comprehensive development guide
+- [CAPACITOR_SETUP.md](./CAPACITOR_SETUP.md) - Setup summary and configuration
+- [.github/workflows/README.md](./.github/workflows/README.md) - CI/CD documentation
+
+**GitHub Actions CI/CD** is configured to automatically build APK, AAB, and IPA files on every push to main.
