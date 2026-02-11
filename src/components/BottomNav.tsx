@@ -25,7 +25,7 @@ export const BottomNav = ({ activeTab, onTabChange }: BottomNavProps) => {
               onClick={() => onTabChange(tab.id)}
               className={`
                 flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-medium
-                transition-all duration-300 ease-out
+                transition-all duration-300 ease-out tap-bounce
                 ${isActive
                   ? "glass-pill-active ios-shadow-sm"
                   : "text-muted-foreground hover:text-foreground"

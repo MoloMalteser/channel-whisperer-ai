@@ -53,22 +53,28 @@ export type Database = {
         Row: {
           channel_name: string | null
           created_at: string
+          follower_goal: number | null
           id: string
           is_active: boolean
+          platform: string | null
           url: string
         }
         Insert: {
           channel_name?: string | null
           created_at?: string
+          follower_goal?: number | null
           id?: string
           is_active?: boolean
+          platform?: string | null
           url: string
         }
         Update: {
           channel_name?: string | null
           created_at?: string
+          follower_goal?: number | null
           id?: string
           is_active?: boolean
+          platform?: string | null
           url?: string
         }
         Relationships: []

@@ -1,5 +1,5 @@
 import type { TrackedChannel } from "@/pages/Index";
-import { Plus, MoreHorizontal } from "lucide-react";
+import { Plus, MoreHorizontal, Target } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,64 +12,54 @@ interface TopBarProps {
   selectedChannelId: string | null;
   onSelectChannel: (id: string) => void;
   onAddChannel: () => void;
+  onSetGoal: () => void;
 }
 
-export const TopBar = ({ channels, selectedChannelId, onSelectChannel, onAddChannel }: TopBarProps) => {
+const platformIcon: Record<string, string> = {
+  whatsapp: "💬",
+  tiktok: "🎵",
+  instagram: "📸",
+  youtube: "▶️",
+  other: "🌐",
+};
+
+export const TopBar = ({ channels, selectedChannelId, onSelectChannel, onAddChannel, onSetGoal }: TopBarProps) => {
   return (
     <div className="sticky top-0 z-40 px-4 pt-4 pb-3">
       <div className="flex items-center justify-between mb-3">
-        <h1 className="text-xl font-bold text-foreground tracking-tight">
-          Tracker
-        </h1>
+        <h1 className="text-xl font-bold text-foreground tracking-tight">Tracker</h1>
         <div className="flex items-center gap-2">
-          <button
-            onClick={onAddChannel}
-            className="w-9 h-9 rounded-full glass flex items-center justify-center
-                       text-foreground hover:bg-[hsl(var(--glass-hover))]
-                       transition-all duration-200 active:scale-95"
-          >
+          <button onClick={onAddChannel}
+            className="w-9 h-9 rounded-full glass flex items-center justify-center text-foreground hover:bg-[hsl(var(--glass-hover))] transition-all tap-bounce">
             <Plus className="w-5 h-5" />
           </button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button
-                className="w-9 h-9 rounded-full glass flex items-center justify-center
-                           text-foreground hover:bg-[hsl(var(--glass-hover))]
-                           transition-all duration-200 active:scale-95"
-              >
+              <button className="w-9 h-9 rounded-full glass flex items-center justify-center text-foreground hover:bg-[hsl(var(--glass-hover))] transition-all tap-bounce">
                 <MoreHorizontal className="w-5 h-5" />
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="glass-strong rounded-2xl border-0 ios-shadow min-w-[180px]">
-              <DropdownMenuItem className="rounded-xl text-sm cursor-pointer">
-                Alle aktualisieren
+              <DropdownMenuItem onClick={onSetGoal} className="rounded-xl text-sm cursor-pointer gap-2">
+                <Target className="w-4 h-4" /> Follower-Ziel setzen
               </DropdownMenuItem>
               <DropdownMenuItem className="rounded-xl text-sm cursor-pointer">
-                Export CSV
+                Alle aktualisieren
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
       </div>
 
-      {/* Channel pills */}
       {channels.length > 0 && (
         <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-hide">
           {channels.map((ch) => {
             const isSelected = ch.id === selectedChannelId;
             return (
-              <button
-                key={ch.id}
-                onClick={() => onSelectChannel(ch.id)}
-                className={`
-                  flex-shrink-0 px-4 py-2 rounded-full text-xs font-medium
-                  transition-all duration-300 ease-out active:scale-95
-                  ${isSelected
-                    ? "glass-pill-active ios-shadow-sm"
-                    : "glass-pill text-muted-foreground hover:text-foreground"
-                  }
-                `}
-              >
+              <button key={ch.id} onClick={() => onSelectChannel(ch.id)}
+                className={`flex-shrink-0 px-4 py-2 rounded-full text-xs font-medium transition-all duration-300 ease-out tap-bounce
+                  ${isSelected ? "glass-pill-active ios-shadow-sm" : "glass-pill text-muted-foreground hover:text-foreground"}`}>
+                <span className="mr-1">{platformIcon[ch.platform] || "🌐"}</span>
                 {ch.channel_name || "Channel"}
               </button>
             );
