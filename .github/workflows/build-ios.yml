@@ -9,6 +9,9 @@ on:
       - main
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build-ios:
     name: Build iOS (Unsigned IPA)
@@ -172,3 +175,39 @@ jobs:
           name: ios-simulator-app
           path: ios/App/App-Simulator.app.zip
           retention-days: 30
+
+  release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    needs: [build-ios, build-ios-simulator]
+    if: github.event_name != 'pull_request'
+
+    steps:
+      - name: Download unsigned IPA
+        uses: actions/download-artifact@v4
+        with:
+          name: ios-unsigned-ipa
+          path: release-assets/ios/ipa
+
+      - name: Download dSYMs
+        uses: actions/download-artifact@v4
+        with:
+          name: ios-dsyms
+          path: release-assets/ios/dsyms
+
+      - name: Download Simulator App
+        uses: actions/download-artifact@v4
+        with:
+          name: ios-simulator-app
+          path: release-assets/ios/simulator
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ios-${{ github.run_number }}
+          name: iOS Build ${{ github.run_number }}
+          generate_release_notes: true
+          files: |
+            release-assets/ios/ipa/*.ipa
+            release-assets/ios/dsyms/**
+            release-assets/ios/simulator/*.zip
