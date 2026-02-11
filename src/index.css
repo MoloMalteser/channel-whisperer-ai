@@ -2,60 +2,53 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
 
 @layer base {
   :root {
-    --background: 160 10% 6%;
-    --foreground: 150 20% 92%;
+    --background: 0 0% 5%;
+    --foreground: 0 0% 96%;
 
-    --card: 160 8% 10%;
-    --card-foreground: 150 20% 92%;
+    --card: 0 0% 10%;
+    --card-foreground: 0 0% 96%;
 
-    --popover: 160 8% 10%;
-    --popover-foreground: 150 20% 92%;
+    --popover: 0 0% 10%;
+    --popover-foreground: 0 0% 96%;
 
-    --primary: 142 70% 45%;
-    --primary-foreground: 160 10% 6%;
+    --primary: 0 0% 100%;
+    --primary-foreground: 0 0% 5%;
 
-    --secondary: 160 8% 14%;
-    --secondary-foreground: 150 20% 80%;
+    --secondary: 0 0% 14%;
+    --secondary-foreground: 0 0% 80%;
 
-    --muted: 160 6% 16%;
-    --muted-foreground: 150 10% 50%;
+    --muted: 0 0% 16%;
+    --muted-foreground: 0 0% 55%;
 
-    --accent: 142 70% 45%;
-    --accent-foreground: 160 10% 6%;
+    --accent: 0 0% 18%;
+    --accent-foreground: 0 0% 96%;
 
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 160 8% 18%;
-    --input: 160 8% 18%;
-    --ring: 142 70% 45%;
+    --border: 0 0% 18%;
+    --input: 0 0% 18%;
+    --ring: 0 0% 40%;
 
-    --radius: 0.75rem;
+    --radius: 1rem;
 
-    --whatsapp: 142 70% 45%;
-    --whatsapp-foreground: 160 10% 6%;
-    --whatsapp-glow: 142 80% 50%;
-    --whatsapp-dark: 142 60% 30%;
-    --surface: 160 8% 12%;
-    --surface-hover: 160 8% 16%;
+    --glass: 0 0% 100% / 0.06;
+    --glass-border: 0 0% 100% / 0.1;
+    --glass-hover: 0 0% 100% / 0.1;
+    --glass-strong: 0 0% 100% / 0.12;
 
-    --gradient-whatsapp: linear-gradient(135deg, hsl(142 70% 45%), hsl(142 80% 55%));
-    --gradient-dark: linear-gradient(180deg, hsl(160 10% 6%), hsl(160 8% 10%));
-    --shadow-glow: 0 0 40px -10px hsl(142 70% 45% / 0.3);
-    --shadow-card: 0 4px 24px -4px hsl(0 0% 0% / 0.4);
-
-    --sidebar-background: 160 8% 8%;
-    --sidebar-foreground: 150 20% 80%;
-    --sidebar-primary: 142 70% 45%;
-    --sidebar-primary-foreground: 160 10% 6%;
-    --sidebar-accent: 160 8% 14%;
-    --sidebar-accent-foreground: 150 20% 80%;
-    --sidebar-border: 160 8% 18%;
-    --sidebar-ring: 142 70% 45%;
+    --sidebar-background: 0 0% 8%;
+    --sidebar-foreground: 0 0% 80%;
+    --sidebar-primary: 0 0% 100%;
+    --sidebar-primary-foreground: 0 0% 5%;
+    --sidebar-accent: 0 0% 14%;
+    --sidebar-accent-foreground: 0 0% 80%;
+    --sidebar-border: 0 0% 18%;
+    --sidebar-ring: 0 0% 40%;
   }
 }
 
@@ -66,71 +59,90 @@
 
   body {
     @apply bg-background text-foreground;
-    font-family: 'Space Grotesk', sans-serif;
-  }
-
-  .font-mono {
-    font-family: 'JetBrains Mono', monospace;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 }
 
 @layer utilities {
-  .glow-text {
-    text-shadow: 0 0 20px hsl(142 70% 45% / 0.5), 0 0 40px hsl(142 70% 45% / 0.2);
-  }
-
-  .glow-border {
-    box-shadow: 0 0 20px -5px hsl(142 70% 45% / 0.3), inset 0 0 20px -10px hsl(142 70% 45% / 0.1);
-  }
-
   .glass {
-    backdrop-filter: blur(16px);
-    background: hsl(160 8% 10% / 0.7);
+    backdrop-filter: blur(40px) saturate(180%);
+    -webkit-backdrop-filter: blur(40px) saturate(180%);
+    background: hsl(var(--glass));
+    border: 1px solid hsl(var(--glass-border));
   }
 
-  .pulse-glow {
-    animation: pulseGlow 3s ease-in-out infinite;
+  .glass-strong {
+    backdrop-filter: blur(60px) saturate(200%);
+    -webkit-backdrop-filter: blur(60px) saturate(200%);
+    background: hsl(var(--glass-strong));
+    border: 1px solid hsl(var(--glass-border));
   }
 
-  @keyframes pulseGlow {
-    0%, 100% {
-      box-shadow: 0 0 20px -5px hsl(142 70% 45% / 0.3);
-    }
-    50% {
-      box-shadow: 0 0 40px -5px hsl(142 70% 45% / 0.5);
-    }
+  .glass-pill {
+    backdrop-filter: blur(40px) saturate(180%);
+    -webkit-backdrop-filter: blur(40px) saturate(180%);
+    background: hsl(0 0% 100% / 0.08);
+    border: 1px solid hsl(0 0% 100% / 0.12);
   }
 
-  @keyframes countUp {
-    from {
-      opacity: 0;
-      transform: translateY(20px) scale(0.9);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0) scale(1);
-    }
+  .glass-pill-active {
+    backdrop-filter: blur(40px) saturate(180%);
+    -webkit-backdrop-filter: blur(40px) saturate(180%);
+    background: hsl(0 0% 100% / 0.95);
+    color: hsl(0 0% 5%);
   }
 
-  .animate-count-up {
-    animation: countUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  .ios-shadow {
+    box-shadow: 0 8px 32px -4px hsl(0 0% 0% / 0.5),
+                0 2px 8px -2px hsl(0 0% 0% / 0.3);
   }
 
-  @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
+  .ios-shadow-sm {
+    box-shadow: 0 2px 12px -2px hsl(0 0% 0% / 0.4);
+  }
+
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(16px); }
     to { opacity: 1; transform: translateY(0); }
   }
 
-  .animate-fade-in {
-    animation: fadeIn 0.4s ease-out forwards;
+  @keyframes scaleIn {
+    from { opacity: 0; transform: scale(0.92); }
+    to { opacity: 1; transform: scale(1); }
   }
 
-  @keyframes spin-slow {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
+  @keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
   }
 
-  .animate-spin-slow {
-    animation: spin-slow 2s linear infinite;
+  @keyframes pulseSubtle {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
   }
+
+  .animate-slide-up {
+    animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  .animate-scale-in {
+    animation: scaleIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  .animate-shimmer {
+    background: linear-gradient(90deg, transparent 0%, hsl(0 0% 100% / 0.06) 50%, transparent 100%);
+    background-size: 200% 100%;
+    animation: shimmer 2s ease-in-out infinite;
+  }
+
+  .animate-pulse-subtle {
+    animation: pulseSubtle 2s ease-in-out infinite;
+  }
+
+  .stagger-1 { animation-delay: 0.05s; }
+  .stagger-2 { animation-delay: 0.1s; }
+  .stagger-3 { animation-delay: 0.15s; }
+  .stagger-4 { animation-delay: 0.2s; }
 }
