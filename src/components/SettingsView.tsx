@@ -9,8 +9,8 @@ export const SettingsView = () => {
             <Info className="w-5 h-5 text-foreground" />
           </div>
           <div>
-            <p className="text-sm font-semibold text-foreground">WA Channel Tracker</p>
-            <p className="text-xs text-muted-foreground">v1.0</p>
+            <p className="text-sm font-semibold text-foreground">Social Tracker</p>
+            <p className="text-xs text-muted-foreground">v2.0</p>
           </div>
         </div>
         <div className="flex flex-col gap-3">
@@ -22,21 +22,39 @@ export const SettingsView = () => {
             <span className="text-sm text-foreground">Methode</span>
             <span className="text-xs text-muted-foreground glass-pill rounded-full px-3 py-1">Regex (kein AI)</span>
           </div>
+          <div className="flex items-center justify-between py-3 border-b border-border/30">
+            <span className="text-sm text-foreground">Benachrichtigungen</span>
+            <span className="text-xs text-muted-foreground glass-pill rounded-full px-3 py-1">In-App Toast</span>
+          </div>
           <div className="flex items-center justify-between py-3">
-            <span className="text-sm text-foreground">Scraper</span>
-            <span className="text-xs text-muted-foreground glass-pill rounded-full px-3 py-1">Direct Fetch</span>
+            <span className="text-sm text-foreground">Plattformen</span>
+            <div className="flex gap-1.5">
+              {["💬", "🎵", "📸", "▶️"].map((e, i) => (
+                <span key={i} className="text-sm glass-pill rounded-full w-8 h-8 flex items-center justify-center">{e}</span>
+              ))}
+            </div>
           </div>
         </div>
       </div>
 
       <div className="glass rounded-3xl p-5">
-        <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider mb-3">
-          Über
-        </p>
-        <p className="text-sm text-muted-foreground leading-relaxed">
-          Dieser Tracker überwacht WhatsApp-Channel Follower automatisch jede Minute.
-          Kein AI nötig — die Follower-Zahl wird direkt aus den Meta-Tags der Seite extrahiert.
-        </p>
+        <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider mb-3">Unterstützte Plattformen</p>
+        <div className="flex flex-col gap-2">
+          {[
+            { icon: "💬", name: "WhatsApp", desc: "Channel-Follower" },
+            { icon: "🎵", name: "TikTok", desc: "Profil-Follower" },
+            { icon: "📸", name: "Instagram", desc: "Profil-Follower" },
+            { icon: "▶️", name: "YouTube", desc: "Kanal-Abonnenten" },
+          ].map((p) => (
+            <div key={p.name} className="flex items-center gap-3 py-2">
+              <span className="text-lg">{p.icon}</span>
+              <div>
+                <p className="text-sm text-foreground font-medium">{p.name}</p>
+                <p className="text-[11px] text-muted-foreground">{p.desc}</p>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );

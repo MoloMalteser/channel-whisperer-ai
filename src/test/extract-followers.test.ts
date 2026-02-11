@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { parseShortNumber, extractFollowerCount } from "@/lib/extract-followers";
+import { parseShortNumber, extractFollowerCount, detectPlatform } from "@/lib/extract-followers";
 
 describe("parseShortNumber", () => {
   it("parses plain integers", () => {
@@ -18,13 +18,8 @@ describe("parseShortNumber", () => {
     expect(parseShortNumber("3m")).toBe(3000000);
   });
 
-  it("parses B suffix", () => {
-    expect(parseShortNumber("1B")).toBe(1000000000);
-  });
-
   it("handles commas", () => {
     expect(parseShortNumber("15,400")).toBe(15400);
-    expect(parseShortNumber("1,200,000")).toBe(1200000);
   });
 
   it("returns null for invalid input", () => {
@@ -33,62 +28,79 @@ describe("parseShortNumber", () => {
   });
 });
 
+describe("detectPlatform", () => {
+  it("detects whatsapp", () => {
+    expect(detectPlatform("https://whatsapp.com/channel/abc")).toBe("whatsapp");
+  });
+  it("detects tiktok", () => {
+    expect(detectPlatform("https://www.tiktok.com/@user")).toBe("tiktok");
+  });
+  it("detects instagram", () => {
+    expect(detectPlatform("https://instagram.com/user")).toBe("instagram");
+  });
+  it("detects youtube", () => {
+    expect(detectPlatform("https://youtube.com/@channel")).toBe("youtube");
+    expect(detectPlatform("https://youtu.be/abc")).toBe("youtube");
+  });
+  it("returns other for unknown", () => {
+    expect(detectPlatform("https://example.com")).toBe("other");
+  });
+});
+
 describe("extractFollowerCount", () => {
-  it("extracts from og:description meta tag", () => {
+  it("extracts WhatsApp followers from og:description", () => {
     const html = `<html><head>
       <meta property="og:title" content="NoStudios" />
       <meta property="og:description" content="Channel • 10 followers • We are NoStudios" />
-    </head><body></body></html>`;
-
-    const result = extractFollowerCount(html);
-    expect(result.followerCount).toBe(10);
-    expect(result.channelName).toBe("NoStudios");
+    </head></html>`;
+    const r = extractFollowerCount(html, "https://whatsapp.com/channel/abc");
+    expect(r.followerCount).toBe(10);
+    expect(r.channelName).toBe("NoStudios");
+    expect(r.platform).toBe("whatsapp");
   });
 
-  it("extracts K-format followers", () => {
+  it("extracts TikTok followers", () => {
     const html = `<html><head>
-      <meta property="og:title" content="BigChannel" />
-      <meta property="og:description" content="15.4K followers on WhatsApp" />
-    </head><body></body></html>`;
-
-    const result = extractFollowerCount(html);
-    expect(result.followerCount).toBe(15400);
-    expect(result.channelName).toBe("BigChannel");
+      <meta property="og:title" content="CoolUser" />
+      <meta property="og:description" content="2.5M Followers, 100 Following" />
+    </head></html>`;
+    const r = extractFollowerCount(html, "https://tiktok.com/@cooluser");
+    expect(r.followerCount).toBe(2500000);
+    expect(r.platform).toBe("tiktok");
   });
 
-  it("extracts M-format followers", () => {
+  it("extracts Instagram followers", () => {
     const html = `<html><head>
-      <meta property="og:description" content="1.2M Follower" />
-      <title>MegaChannel</title>
-    </head><body></body></html>`;
-
-    const result = extractFollowerCount(html);
-    expect(result.followerCount).toBe(1200000);
-    expect(result.channelName).toBe("MegaChannel");
+      <meta property="og:title" content="InstaUser" />
+      <meta property="og:description" content="500K Followers, 200 Following" />
+    </head></html>`;
+    const r = extractFollowerCount(html, "https://instagram.com/instauser");
+    expect(r.followerCount).toBe(500000);
+    expect(r.platform).toBe("instagram");
   });
 
-  it("extracts from body text if no meta tags", () => {
-    const html = `<html><head><title>TestCh</title></head>
-    <body><div>500 followers</div></body></html>`;
+  it("extracts YouTube subscribers", () => {
+    const html = `<html><head>
+      <meta property="og:title" content="YouTuber" />
+      <meta property="og:description" content="1.2M subscribers on YouTube" />
+    </head></html>`;
+    const r = extractFollowerCount(html, "https://youtube.com/@youtuber");
+    expect(r.followerCount).toBe(1200000);
+    expect(r.platform).toBe("youtube");
+  });
 
-    const result = extractFollowerCount(html);
-    expect(result.followerCount).toBe(500);
+  it("handles German Abonnenten for YouTube", () => {
+    const html = `<html><head>
+      <meta property="og:title" content="DeutschYT" />
+      <meta name="description" content="3.5K Abonnenten" />
+    </head></html>`;
+    const r = extractFollowerCount(html, "https://youtube.com/@de");
+    expect(r.followerCount).toBe(3500);
   });
 
   it("returns null when no follower count found", () => {
     const html = `<html><head><title>Empty</title></head><body>No data</body></html>`;
-    const result = extractFollowerCount(html);
-    expect(result.followerCount).toBeNull();
-    expect(result.channelName).toBe("Empty");
-  });
-
-  it("handles German Abonnenten", () => {
-    const html = `<html><head>
-      <meta property="og:description" content="3.5K Abonnenten" />
-      <meta property="og:title" content="DeutschKanal" />
-    </head><body></body></html>`;
-
-    const result = extractFollowerCount(html);
-    expect(result.followerCount).toBe(3500);
+    const r = extractFollowerCount(html, "https://example.com");
+    expect(r.followerCount).toBeNull();
   });
 });

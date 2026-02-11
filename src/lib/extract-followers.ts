@@ -1,26 +1,21 @@
 /**
- * Extracts follower count from raw HTML using regex patterns.
- * No AI needed — fast and deterministic.
+ * Multi-platform follower extraction from HTML.
+ * Supports: WhatsApp, TikTok, Instagram, YouTube
  */
 
 export interface ExtractionResult {
   followerCount: number | null;
   channelName: string;
   rawText: string;
+  platform: string;
 }
 
-/**
- * Parse shorthand numbers like "15.4K" → 15400, "1.2M" → 1200000
- */
 export function parseShortNumber(text: string): number | null {
   const cleaned = text.replace(/,/g, '').replace(/\s/g, '');
-  
   const match = cleaned.match(/^(\d+(?:\.\d+)?)\s*([KkMmBb])?$/);
   if (!match) return null;
-  
   const num = parseFloat(match[1]);
   const suffix = (match[2] || '').toUpperCase();
-  
   switch (suffix) {
     case 'K': return Math.round(num * 1_000);
     case 'M': return Math.round(num * 1_000_000);
@@ -29,82 +24,113 @@ export function parseShortNumber(text: string): number | null {
   }
 }
 
-/**
- * Extract follower count from HTML content using multiple regex strategies.
- */
-export function extractFollowerCount(html: string): ExtractionResult {
-  const result: ExtractionResult = {
-    followerCount: null,
-    channelName: 'Unknown Channel',
-    rawText: '',
-  };
+export function detectPlatform(url: string): string {
+  const u = url.toLowerCase();
+  if (u.includes('whatsapp.com')) return 'whatsapp';
+  if (u.includes('tiktok.com')) return 'tiktok';
+  if (u.includes('instagram.com')) return 'instagram';
+  if (u.includes('youtube.com') || u.includes('youtu.be')) return 'youtube';
+  return 'other';
+}
 
-  // Extract channel name from og:title or <title>
-  const ogTitleMatch = html.match(/<meta[^>]*property=["']og:title["'][^>]*content=["']([^"']+)["']/i)
-    || html.match(/<meta[^>]*content=["']([^"']+)["'][^>]*property=["']og:title["']/i);
-  if (ogTitleMatch) {
-    result.channelName = ogTitleMatch[1].trim();
-  } else {
-    const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i);
-    if (titleMatch) {
-      result.channelName = titleMatch[1].trim();
-    }
-  }
+function extractMeta(html: string, property: string): string | null {
+  const re = new RegExp(`<meta[^>]*(?:property|name)=["']${property}["'][^>]*content=["']([^"']+)["']`, 'i');
+  const match = html.match(re);
+  if (match) return match[1];
+  // reversed order
+  const re2 = new RegExp(`<meta[^>]*content=["']([^"']+)["'][^>]*(?:property|name)=["']${property}["']`, 'i');
+  const match2 = html.match(re2);
+  return match2 ? match2[1] : null;
+}
 
-  // Strategy 1: Look in og:description or meta description for follower patterns
-  const descMatch = html.match(/<meta[^>]*(?:property=["']og:description["']|name=["']description["'])[^>]*content=["']([^"']+)["']/i)
-    || html.match(/<meta[^>]*content=["']([^"']+)["'][^>]*(?:property=["']og:description["']|name=["']description["'])/i);
-  
-  if (descMatch) {
-    const desc = descMatch[1];
-    const followerMatch = desc.match(/(\d[\d,.]*[KkMmBb]?)\s*(?:followers?|Follower|Abonnenten|subscribers?)/i)
-      || desc.match(/(?:followers?|Follower|Abonnenten|subscribers?)\s*[:\s]*(\d[\d,.]*[KkMmBb]?)/i);
-    
-    if (followerMatch) {
-      result.followerCount = parseShortNumber(followerMatch[1]);
-      result.rawText = desc;
-      return result;
-    }
-  }
+function extractTitle(html: string): string {
+  const ogTitle = extractMeta(html, 'og:title');
+  if (ogTitle) return ogTitle.trim();
+  const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i);
+  return titleMatch ? titleMatch[1].trim() : 'Unknown Channel';
+}
 
-  // Strategy 2: Look for "X followers" pattern anywhere in HTML body
-  const bodyPatterns = [
-    /(\d[\d,.]*[KkMmBb]?)\s*(?:followers?|Follower|Abonnenten|subscribers?)/gi,
-    /(?:Channel|Kanal)\s*[•·|]\s*(\d[\d,.]*[KkMmBb]?)\s*(?:followers?|Follower)/gi,
+function extractGenericFollowers(html: string): { count: number | null; rawText: string } {
+  // Meta description
+  const desc = extractMeta(html, 'og:description') || extractMeta(html, 'description') || '';
+
+  const followerPatterns = [
+    /(\d[\d,.]*[KkMmBb]?)\s*(?:followers?|Follower|Abonnenten|subscribers?|abonnés?)/i,
+    /(?:followers?|Follower|Abonnenten|subscribers?|abonnés?)\s*[:\s]*(\d[\d,.]*[KkMmBb]?)/i,
   ];
 
-  for (const pattern of bodyPatterns) {
-    const matches = [...html.matchAll(pattern)];
-    if (matches.length > 0) {
-      const match = matches[0];
-      result.followerCount = parseShortNumber(match[1]);
-      result.rawText = match[0];
-      return result;
-    }
+  // Check description first
+  for (const p of followerPatterns) {
+    const m = desc.match(p);
+    if (m) return { count: parseShortNumber(m[1]), rawText: desc };
   }
 
-  // Strategy 3: Look for structured data / JSON-LD
-  const jsonLdMatch = html.match(/<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/i);
-  if (jsonLdMatch) {
-    try {
-      const jsonData = JSON.parse(jsonLdMatch[1]);
-      if (jsonData.interactionStatistic) {
-        const stats = Array.isArray(jsonData.interactionStatistic)
-          ? jsonData.interactionStatistic
-          : [jsonData.interactionStatistic];
-        for (const stat of stats) {
-          if (stat.interactionType?.includes?.('Follow') || stat['@type']?.includes?.('Follow')) {
-            result.followerCount = parseInt(stat.userInteractionCount, 10);
-            result.rawText = `JSON-LD: ${stat.userInteractionCount}`;
-            return result;
-          }
-        }
-      }
-    } catch {
-      // ignore JSON parse errors
-    }
+  // Check body
+  for (const p of followerPatterns) {
+    const bodyPatterns = new RegExp(p.source, 'gi');
+    const matches = [...html.matchAll(bodyPatterns)];
+    if (matches.length > 0) return { count: parseShortNumber(matches[0][1]), rawText: matches[0][0] };
   }
 
-  result.rawText = 'No follower count found in page';
-  return result;
+  return { count: null, rawText: 'No follower count found' };
+}
+
+function extractTikTok(html: string): { count: number | null; rawText: string } {
+  // TikTok often has "X Followers" in meta or page content
+  const desc = extractMeta(html, 'og:description') || '';
+  const patterns = [
+    /(\d[\d,.]*[KkMmBb]?)\s*Followers/i,
+    /(\d[\d,.]*[KkMmBb]?)\s*Fans/i,
+  ];
+  for (const p of patterns) {
+    const m = desc.match(p);
+    if (m) return { count: parseShortNumber(m[1]), rawText: desc };
+  }
+  return extractGenericFollowers(html);
+}
+
+function extractInstagram(html: string): { count: number | null; rawText: string } {
+  const desc = extractMeta(html, 'og:description') || extractMeta(html, 'description') || '';
+  // Instagram description format: "1.2M Followers, 500 Following, 200 Posts"
+  const m = desc.match(/(\d[\d,.]*[KkMmBb]?)\s*Followers/i);
+  if (m) return { count: parseShortNumber(m[1]), rawText: desc };
+  return extractGenericFollowers(html);
+}
+
+function extractYouTube(html: string): { count: number | null; rawText: string } {
+  const desc = extractMeta(html, 'og:description') || '';
+  // YouTube: "X subscribers"
+  const patterns = [
+    /(\d[\d,.]*[KkMmBb]?)\s*subscribers?/i,
+    /(\d[\d,.]*[KkMmBb]?)\s*Abonnenten/i,
+  ];
+  for (const p of patterns) {
+    const m = desc.match(p);
+    if (m) return { count: parseShortNumber(m[1]), rawText: desc };
+    // body
+    const bodyMatches = [...html.matchAll(new RegExp(p.source, 'gi'))];
+    if (bodyMatches.length > 0) return { count: parseShortNumber(bodyMatches[0][1]), rawText: bodyMatches[0][0] };
+  }
+  return extractGenericFollowers(html);
+}
+
+export function extractFollowerCount(html: string, url: string): ExtractionResult {
+  const platform = detectPlatform(url);
+  const channelName = extractTitle(html);
+
+  let extraction: { count: number | null; rawText: string };
+
+  switch (platform) {
+    case 'tiktok': extraction = extractTikTok(html); break;
+    case 'instagram': extraction = extractInstagram(html); break;
+    case 'youtube': extraction = extractYouTube(html); break;
+    default: extraction = extractGenericFollowers(html); break;
+  }
+
+  return {
+    followerCount: extraction.count,
+    channelName,
+    rawText: extraction.rawText,
+    platform,
+  };
 }
