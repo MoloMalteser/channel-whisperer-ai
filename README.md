@@ -83,7 +83,7 @@ This project is now mobile-ready with Capacitor! Build native Android and iOS ap
 npm run cap:sync:android
 npm run cap:open:android
 
-# Build for iOS
+# Build for iOS (uses Swift Package Manager)
 npm run cap:sync:ios
 npm run cap:open:ios
 ```
@@ -92,6 +92,7 @@ npm run cap:open:ios
 - [README_MOBILE.md](./README_MOBILE.md) - Mobile quick start guide
 - [MOBILE_BUILD_GUIDE.md](./MOBILE_BUILD_GUIDE.md) - Comprehensive development guide
 - [CAPACITOR_SETUP.md](./CAPACITOR_SETUP.md) - Setup summary and configuration
+- [IOS_BUILD_FIX.md](./IOS_BUILD_FIX.md) - iOS build workflow documentation
 - [.github/workflows/README.md](./.github/workflows/README.md) - CI/CD documentation
 
 **GitHub Actions CI/CD** is configured to automatically build APK, AAB, and IPA files on every push to main.
