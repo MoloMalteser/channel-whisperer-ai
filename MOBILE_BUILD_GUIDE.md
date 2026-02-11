@@ -91,7 +91,7 @@ npm run cap:open:ios
 
 ## GitHub Actions CI/CD
 
-The project includes automated build workflows for both platforms.
+The project includes automated build workflows for both platforms that run without requiring any secrets to be configured.
 
 ### Android Builds
 
@@ -99,25 +99,8 @@ The Android workflow (`.github/workflows/build-android.yml`) runs on every push/
 
 1. **Debug APK** - Unsigned, ready for testing
 2. **Release AAB** - Android App Bundle for Google Play Store
-3. **Signed APK** (manual workflow only) - Requires keystore secrets
 
-#### Setting Up Android Secrets
-
-For signed builds, add these secrets to your GitHub repository:
-
-- `ANDROID_KEYSTORE_BASE64` - Base64-encoded keystore file
-- `ANDROID_KEYSTORE_PASSWORD` - Keystore password
-- `ANDROID_KEY_ALIAS` - Key alias
-- `ANDROID_KEY_PASSWORD` - Key password
-- `VITE_SUPABASE_URL` - Your Supabase URL
-- `VITE_SUPABASE_PUBLISHABLE_KEY` - Your Supabase publishable key
-- `VITE_SUPABASE_PROJECT_ID` - Your Supabase project ID
-
-To create a base64-encoded keystore:
-```bash
-base64 -i your-keystore.jks | pbcopy  # macOS
-base64 -i your-keystore.jks | xclip   # Linux
-```
+*Note: Signed builds are not included to avoid requiring keystore secrets. The generated APKs and AABs are fully functional for testing and development purposes.*
 
 ### iOS Builds
 
@@ -127,15 +110,13 @@ The iOS workflow (`.github/workflows/build-ios.yml`) runs on every push/PR to ma
 2. **iOS Simulator App** - For testing in simulators
 3. **dSYMs** - Debug symbols for crash reporting
 
-#### Setting Up iOS Secrets
+### No Secrets Required
 
-Add these secrets to your GitHub repository:
+Both workflows now run without requiring any GitHub repository secrets to be configured. The builds will work out of the box, though the app will use default/empty Supabase configuration if no secrets are provided. For a fully functional app with your own Supabase backend, you can optionally add these secrets later:
 
 - `VITE_SUPABASE_URL` - Your Supabase URL
-- `VITE_SUPABASE_PUBLISHABLE_KEY` - Your Supabase publishable key
+- `VITE_SUPABASE_PUBLISHABLE_KEY` - Your Supabase publishable key  
 - `VITE_SUPABASE_PROJECT_ID` - Your Supabase project ID
-
-For signed iOS builds (App Store distribution), you'll need to add additional signing configuration and secrets. This is beyond the basic setup.
 
 ## Building Manually
 
