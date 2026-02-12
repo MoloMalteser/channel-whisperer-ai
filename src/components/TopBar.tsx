@@ -1,5 +1,6 @@
 import type { TrackedChannel } from "@/pages/Index";
 import { Plus, MoreHorizontal, Target } from "lucide-react";
+import { PlatformIcon } from "@/components/PlatformIcon";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,14 +15,6 @@ interface TopBarProps {
   onAddChannel: () => void;
   onSetGoal: () => void;
 }
-
-const platformIcon: Record<string, string> = {
-  whatsapp: "💬",
-  tiktok: "🎵",
-  instagram: "📸",
-  youtube: "▶️",
-  other: "🌐",
-};
 
 export const TopBar = ({ channels, selectedChannelId, onSelectChannel, onAddChannel, onSetGoal }: TopBarProps) => {
   return (
@@ -57,9 +50,9 @@ export const TopBar = ({ channels, selectedChannelId, onSelectChannel, onAddChan
             const isSelected = ch.id === selectedChannelId;
             return (
               <button key={ch.id} onClick={() => onSelectChannel(ch.id)}
-                className={`flex-shrink-0 px-4 py-2 rounded-full text-xs font-medium transition-all duration-300 ease-out tap-bounce
+                className={`flex-shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-medium transition-all duration-300 ease-out tap-bounce
                   ${isSelected ? "glass-pill-active ios-shadow-sm" : "glass-pill text-muted-foreground hover:text-foreground"}`}>
-                <span className="mr-1">{platformIcon[ch.platform] || "🌐"}</span>
+                <PlatformIcon platform={ch.platform} size={14} />
                 {ch.channel_name || "Channel"}
               </button>
             );

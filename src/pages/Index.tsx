@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { ChannelsView } from "@/components/ChannelsView";
 import { AnalyticsView } from "@/components/AnalyticsView";
@@ -26,6 +27,7 @@ type Tab = "channels" | "analytics" | "settings";
 const tabOrder: Tab[] = ["channels", "analytics", "settings"];
 
 const Index = () => {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<Tab>("channels");
   const [channels, setChannels] = useState<TrackedChannel[]>([]);
   const [selectedChannelId, setSelectedChannelId] = useState<string | null>(null);
@@ -33,6 +35,17 @@ const Index = () => {
   const [showGoalSheet, setShowGoalSheet] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [prevCounts, setPrevCounts] = useState<Record<string, number>>({});
+
+  // Auth check
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session) navigate("/auth");
+    });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (!session) navigate("/auth");
+    });
+    return () => subscription.unsubscribe();
+  }, [navigate]);
 
   const fetchChannels = async () => {
     const { data: channelData, error: chErr } = await supabase
@@ -60,8 +73,8 @@ const Index = () => {
         created_at: ch.created_at,
         latest_count: snap?.follower_count ?? null,
         latest_at: snap?.created_at ?? null,
-        follower_goal: (ch as any).follower_goal ?? null,
-        platform: (ch as any).platform ?? 'whatsapp',
+        follower_goal: ch.follower_goal ?? null,
+        platform: ch.platform ?? 'whatsapp',
       });
     }
 
@@ -76,7 +89,6 @@ const Index = () => {
             description: `Jetzt: ${ch.latest_count.toLocaleString("de-DE")}`,
           });
         }
-        // Check goal reached
         if (ch.follower_goal && ch.latest_count >= ch.follower_goal && prevCounts[ch.id] < ch.follower_goal) {
           toast.success(`🎉 Ziel erreicht!`, {
             description: `${ch.channel_name || 'Channel'} hat ${ch.follower_goal.toLocaleString("de-DE")} Follower erreicht!`,
@@ -125,7 +137,7 @@ const Index = () => {
 
   const handleSetGoal = async (goal: number | null) => {
     if (!selectedChannelId) return;
-    await supabase.from("tracked_channels").update({ follower_goal: goal } as any).eq("id", selectedChannelId);
+    await supabase.from("tracked_channels").update({ follower_goal: goal }).eq("id", selectedChannelId);
     if (goal) toast("Ziel gesetzt!", { description: `${goal.toLocaleString("de-DE")} Follower` });
     fetchChannels();
     setShowGoalSheet(false);
