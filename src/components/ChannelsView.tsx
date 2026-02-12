@@ -1,5 +1,6 @@
 import type { TrackedChannel } from "@/pages/Index";
 import { Users, Pause, Play, Trash2, Radio, Target } from "lucide-react";
+import { PlatformIcon } from "@/components/PlatformIcon";
 
 interface ChannelsViewProps {
   channels: TrackedChannel[];
@@ -13,10 +14,6 @@ const formatNumber = (num: number): string => {
   if (num >= 1_000_000) return (num / 1_000_000).toFixed(1).replace(/\.0$/, "") + "M";
   if (num >= 1_000) return (num / 1_000).toFixed(1).replace(/\.0$/, "") + "K";
   return num.toLocaleString("de-DE");
-};
-
-const platformIcon: Record<string, string> = {
-  whatsapp: "💬", tiktok: "🎵", instagram: "📸", youtube: "▶️", other: "🌐",
 };
 
 export const ChannelsView = ({ channels, selectedChannelId, onToggle, onDelete, onSelect }: ChannelsViewProps) => {
@@ -41,11 +38,11 @@ export const ChannelsView = ({ channels, selectedChannelId, onToggle, onDelete, 
         <div className="glass rounded-3xl p-6 animate-scale-in ios-shadow">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
-              <div className={`w-2 h-2 rounded-full ${selected.is_active ? "bg-green-400 animate-pulse-subtle" : "bg-muted-foreground"}`} />
+              <div className={`w-2 h-2 rounded-full ${selected.is_active ? "bg-green-500 animate-pulse-subtle" : "bg-muted-foreground"}`} />
               <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider">
                 {selected.is_active ? "Live" : "Pausiert"}
               </span>
-              <span className="text-sm">{platformIcon[selected.platform] || "🌐"}</span>
+              <PlatformIcon platform={selected.platform} size={16} />
             </div>
             <div className="flex gap-1">
               <button onClick={() => onToggle(selected.id, selected.is_active)}
@@ -89,7 +86,7 @@ export const ChannelsView = ({ channels, selectedChannelId, onToggle, onDelete, 
                   {Math.min(100, Math.round((selected.latest_count / selected.follower_goal) * 100))}%
                 </span>
               </div>
-              <div className="h-2 rounded-full bg-foreground/10 overflow-hidden">
+              <div className="h-2 rounded-full bg-muted overflow-hidden">
                 <div
                   className="h-full rounded-full bg-foreground/80 transition-all duration-1000 ease-out"
                   style={{ width: `${Math.min(100, (selected.latest_count / selected.follower_goal) * 100)}%` }}
@@ -123,8 +120,8 @@ export const ChannelsView = ({ channels, selectedChannelId, onToggle, onDelete, 
               style={{ opacity: 0, animationFillMode: 'forwards' }}>
               <div className="flex-1 min-w-0 mr-3">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm">{platformIcon[ch.platform] || "🌐"}</span>
-                  <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${ch.is_active ? "bg-green-400" : "bg-muted-foreground"}`} />
+                  <PlatformIcon platform={ch.platform} size={16} />
+                  <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${ch.is_active ? "bg-green-500" : "bg-muted-foreground"}`} />
                   <p className="text-sm font-medium text-foreground truncate">
                     {ch.channel_name || "Channel"}
                   </p>
@@ -132,7 +129,7 @@ export const ChannelsView = ({ channels, selectedChannelId, onToggle, onDelete, 
               </div>
               <div className="flex items-center gap-2">
                 {ch.follower_goal && ch.latest_count !== null && (
-                  <div className="w-8 h-1.5 rounded-full bg-foreground/10 overflow-hidden">
+                  <div className="w-8 h-1.5 rounded-full bg-muted overflow-hidden">
                     <div className="h-full rounded-full bg-foreground/60" style={{ width: `${Math.min(100, (ch.latest_count / ch.follower_goal) * 100)}%` }} />
                   </div>
                 )}

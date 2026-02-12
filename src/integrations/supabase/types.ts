@@ -49,6 +49,36 @@ export type Database = {
           },
         ]
       }
+      profiles: {
+        Row: {
+          check_interval_minutes: number
+          created_at: string
+          display_name: string | null
+          email: string | null
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          check_interval_minutes?: number
+          created_at?: string
+          display_name?: string | null
+          email?: string | null
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          check_interval_minutes?: number
+          created_at?: string
+          display_name?: string | null
+          email?: string | null
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       tracked_channels: {
         Row: {
           channel_name: string | null
@@ -58,6 +88,7 @@ export type Database = {
           is_active: boolean
           platform: string | null
           url: string
+          user_id: string | null
         }
         Insert: {
           channel_name?: string | null
@@ -67,6 +98,7 @@ export type Database = {
           is_active?: boolean
           platform?: string | null
           url: string
+          user_id?: string | null
         }
         Update: {
           channel_name?: string | null
@@ -76,6 +108,7 @@ export type Database = {
           is_active?: boolean
           platform?: string | null
           url?: string
+          user_id?: string | null
         }
         Relationships: []
       }

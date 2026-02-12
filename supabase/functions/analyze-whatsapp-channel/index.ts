@@ -39,26 +39,21 @@ function extractMeta(html: string, property: string): string | null {
 
 function extractFollowers(html: string, url: string) {
   const platform = detectPlatform(url);
-
-  // Channel name
   const ogTitle = extractMeta(html, 'og:title');
   const titleTag = html.match(/<title[^>]*>([^<]+)<\/title>/i);
   const channelName = ogTitle?.trim() || titleTag?.[1]?.trim() || 'Unknown Channel';
 
-  // Follower patterns
   const desc = extractMeta(html, 'og:description') || extractMeta(html, 'description') || '';
   const patterns = [
     /(\d[\d,.]*[KkMmBb]?)\s*(?:followers?|Follower|Abonnenten|subscribers?|Fans|abonnés?)/i,
     /(?:followers?|Follower|Abonnenten|subscribers?)\s*[:\s]*(\d[\d,.]*[KkMmBb]?)/i,
   ];
 
-  // Check description
   for (const p of patterns) {
     const m = desc.match(p);
     if (m) return { followerCount: parseShortNumber(m[1]), channelName, rawText: desc, platform };
   }
 
-  // Check body
   for (const p of patterns) {
     const bp = new RegExp(p.source, 'gi');
     const matches = [...html.matchAll(bp)];
@@ -96,6 +91,15 @@ Deno.serve(async (req) => {
     const { url, mode } = body;
     const supabase = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
 
+    // Get user from auth header
+    let userId: string | null = null;
+    const authHeader = req.headers.get('authorization');
+    if (authHeader) {
+      const token = authHeader.replace('Bearer ', '');
+      const { data: { user } } = await supabase.auth.getUser(token);
+      userId = user?.id ?? null;
+    }
+
     if (mode === 'cron') {
       const { data: channels } = await supabase.from('tracked_channels').select('*').eq('is_active', true);
       if (!channels?.length) return new Response(JSON.stringify({ success: true, message: 'No active channels' }),
@@ -130,11 +134,12 @@ Deno.serve(async (req) => {
       channelId = existing.id;
       await supabase.from('tracked_channels').update({
         channel_name: result.channelName !== 'Unknown Channel' ? result.channelName : undefined,
-        is_active: true, platform: result.platform
+        is_active: true, platform: result.platform,
+        ...(userId ? { user_id: userId } : {}),
       }).eq('id', channelId);
     } else {
       const { data: nc } = await supabase.from('tracked_channels')
-        .insert({ url: url.trim(), channel_name: result.channelName, is_active: true, platform: result.platform })
+        .insert({ url: url.trim(), channel_name: result.channelName, is_active: true, platform: result.platform, user_id: userId })
         .select('id').single();
       channelId = nc?.id;
     }
