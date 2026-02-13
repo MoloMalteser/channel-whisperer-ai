@@ -111,7 +111,58 @@ Deno.serve(async (req) => {
           const r = await scrapeChannel(ch.url);
           if (r.channelName !== 'Unknown Channel')
             await supabase.from('tracked_channels').update({ channel_name: r.channelName, platform: r.platform }).eq('id', ch.id);
+          
+          // Get previous count for comparison
+          const { data: prevSnap } = await supabase.from('follower_snapshots')
+            .select('follower_count').eq('channel_id', ch.id)
+            .order('created_at', { ascending: false }).limit(1).maybeSingle();
+          
           await supabase.from('follower_snapshots').insert({ channel_id: ch.id, follower_count: r.followerCount, raw_text: r.rawText });
+          
+          // Send push notification if count changed
+          if (r.followerCount !== null && prevSnap?.follower_count !== null && r.followerCount !== prevSnap?.follower_count && ch.user_id) {
+            const diff = r.followerCount - (prevSnap?.follower_count ?? 0);
+            const sign = diff > 0 ? '+' : '';
+            const name = r.channelName || ch.channel_name || 'Channel';
+            
+            try {
+              await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/send-push`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`,
+                },
+                body: JSON.stringify({
+                  userId: ch.user_id,
+                  title: `${name}: ${sign}${diff} Follower`,
+                  body: `Aktuell: ${r.followerCount.toLocaleString()} Follower`,
+                  url: '/',
+                }),
+              });
+            } catch (pushErr) {
+              console.error('Push notification failed:', pushErr);
+            }
+
+            // Check goal reached
+            if (ch.follower_goal && r.followerCount >= ch.follower_goal && (prevSnap?.follower_count ?? 0) < ch.follower_goal) {
+              try {
+                await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/send-push`, {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`,
+                  },
+                  body: JSON.stringify({
+                    userId: ch.user_id,
+                    title: '🎉 Ziel erreicht!',
+                    body: `${name} hat ${ch.follower_goal.toLocaleString()} Follower erreicht!`,
+                    url: '/',
+                  }),
+                });
+              } catch {}
+            }
+          }
+          
           results.push({ channel_id: ch.id, ...r });
         } catch (err) {
           const msg = err instanceof Error ? err.message : 'Unknown';
