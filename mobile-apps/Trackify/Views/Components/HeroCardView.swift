@@ -27,6 +27,8 @@ struct HeroCardView: View {
                 Text(channel.latestSnapshot?.followerCount.formatted() ?? "0")
                     .font(.system(size: 44, weight: .heavy, design: .rounded))
                     .foregroundStyle(.white)
+                    .contentTransition(.numericText())
+                    .animation(.smooth(duration: 0.4), value: channel.latestSnapshot?.followerCount ?? 0)
             }
 
             if let goal = channel.followerGoal {

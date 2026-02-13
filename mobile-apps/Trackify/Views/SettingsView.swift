@@ -42,6 +42,9 @@ struct SettingsView: View {
                 Text("Refresh every \(profile.refreshIntervalMinutes) min")
                     .foregroundStyle(.white.opacity(0.7))
             }
+            .onChange(of: profile.refreshIntervalMinutes) { _ in
+                Task { await ChannelScraper.shared.scheduleBackgroundRefresh() }
+            }
         }
         .padding(20)
         .glassmorphic(cornerRadius: 24)
