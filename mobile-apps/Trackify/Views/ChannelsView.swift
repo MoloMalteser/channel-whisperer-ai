@@ -82,7 +82,9 @@ struct ChannelsView: View {
                 ForEach(channels) { channel in
                     ChannelPill(channel: channel, isSelected: channel.id == selectedChannelID)
                         .onTapGesture {
-                            selectedChannelID = channel.id
+                            withAnimation(.spring(response: 0.4, dampingFraction: 0.75)) {
+                                selectedChannelID = channel.id
+                            }
                         }
                 }
             }

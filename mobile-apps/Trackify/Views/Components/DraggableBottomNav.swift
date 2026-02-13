@@ -17,14 +17,22 @@ struct DraggableBottomNav: View {
                 )
 
             HStack(spacing: 24) {
-                ForEach(Array(TrackifyTab.allCases.enumerated()), id: \.offset) { index, tab in
-                    VStack(spacing: 6) {
-                        Image(systemName: tab.systemImage)
-                        Text(tab.title)
-                            .font(.caption2.bold())
+                ForEach(Array(TrackifyTab.allCases.enumerated()), id: \.offset) { _, tab in
+                    Button {
+                        withAnimation(.spring(response: 0.4, dampingFraction: 0.75)) {
+                            selectedTab = tab
+                        }
+                    } label: {
+                        VStack(spacing: 6) {
+                            Image(systemName: tab.systemImage)
+                            Text(tab.title)
+                                .font(.caption2.bold())
+                        }
+                        .foregroundStyle(selectedTab == tab ? Color.black : Color.white)
+                        .frame(width: 60)
+                        .scaleEffect(selectedTab == tab ? 1.05 : 1)
                     }
-                    .foregroundStyle(selectedTab == tab ? Color.black : Color.white)
-                    .frame(width: 60)
+                    .buttonStyle(.plain)
                 }
             }
             .padding(.horizontal, 16)
@@ -39,6 +47,7 @@ struct DraggableBottomNav: View {
         }
         .frame(width: pillWidth, height: pillHeight)
         .glassmorphic(cornerRadius: 32)
+        .sensoryFeedback(.impact(weight: .light), trigger: selectedTab)
         .padding(.bottom, 12)
         .gesture(
             DragGesture(minimumDistance: 8)

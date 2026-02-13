@@ -22,6 +22,8 @@ struct ChannelPill: View {
             Capsule(style: .continuous)
                 .stroke(Color.white.opacity(0.35), lineWidth: 1)
         )
+        .scaleEffect(isSelected ? 1.05 : 1)
         .shadow(color: Color.black.opacity(isSelected ? 0.25 : 0.1), radius: 12, x: 0, y: 6)
+        .animation(.spring(response: 0.35, dampingFraction: 0.7), value: isSelected)
     }
 }
