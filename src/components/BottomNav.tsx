@@ -1,5 +1,6 @@
-import { useRef, useState, useCallback } from "react";
-import { Radio, BarChart3, Settings } from "lucide-react";
+import { useRef, useState, useEffect } from "react";
+import { motion, useMotionValue, useSpring } from "framer-motion";
+import { Radio, BarChart3, Settings, LucideProps } from "lucide-react";
 
 type Tab = "channels" | "analytics" | "settings";
 
@@ -8,7 +9,13 @@ interface BottomNavProps {
   onTabChange: (tab: Tab) => void;
 }
 
-const tabs: { id: Tab; label: string; icon: typeof Radio }[] = [
+interface TabItem {
+  id: Tab;
+  label: string;
+  icon: React.ComponentType<LucideProps>;
+}
+
+const tabs: TabItem[] = [
   { id: "channels", label: "Channels", icon: Radio },
   { id: "analytics", label: "Analytics", icon: BarChart3 },
   { id: "settings", label: "Settings", icon: Settings },
@@ -16,65 +23,144 @@ const tabs: { id: Tab; label: string; icon: typeof Radio }[] = [
 
 export const BottomNav = ({ activeTab, onTabChange }: BottomNavProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
+  const [width, setWidth] = useState(280);
   const [isDragging, setIsDragging] = useState(false);
-  const dragStartX = useRef(0);
-  const dragStartTab = useRef(activeTab);
 
-  const handleDragStart = useCallback((clientX: number) => {
-    setIsDragging(true);
-    dragStartX.current = clientX;
-    dragStartTab.current = activeTab;
-  }, [activeTab]);
+  const indicatorWidth = 52;
+  const indicatorHeight = 38;
+  const tabWidth = width / tabs.length;
+  const activeIndex = tabs.findIndex((t) => t.id === activeTab);
 
-  const handleDragEnd = useCallback((clientX: number) => {
-    if (!isDragging) return;
-    setIsDragging(false);
-    const diff = clientX - dragStartX.current;
-    const threshold = 40;
-    const currentIdx = tabs.findIndex(t => t.id === dragStartTab.current);
+  const x = useMotionValue(activeIndex * tabWidth + tabWidth / 2 - indicatorWidth / 2);
+  const springX = useSpring(x, { stiffness: 800, damping: 45 });
 
-    if (diff > threshold && currentIdx > 0) {
-      onTabChange(tabs[currentIdx - 1].id);
-    } else if (diff < -threshold && currentIdx < tabs.length - 1) {
-      onTabChange(tabs[currentIdx + 1].id);
+  const scaleX = useMotionValue(1);
+  const scaleY = useMotionValue(1);
+  const springScaleX = useSpring(scaleX, { stiffness: 400, damping: 15 });
+  const springScaleY = useSpring(scaleY, { stiffness: 400, damping: 15 });
+
+  const lastX = useRef(0);
+  const lastT = useRef(0);
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+    const update = () => setWidth(containerRef.current!.getBoundingClientRect().width);
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(containerRef.current);
+    return () => ro.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (!isDragging) {
+      x.set(activeIndex * tabWidth + tabWidth / 2 - indicatorWidth / 2);
     }
-  }, [isDragging, onTabChange]);
+  }, [activeIndex, isDragging, tabWidth, x]);
+
+  const setFromClientX = (clientX: number) => {
+    if (!containerRef.current) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    const local = clientX - rect.left;
+    const max = width - indicatorWidth;
+    x.set(Math.max(0, Math.min(local - indicatorWidth / 2, max)));
+  };
+
+  const wobble = (clientX: number) => {
+    const now = performance.now();
+    const dt = Math.max(1, now - lastT.current);
+    const v = (clientX - lastX.current) / dt;
+    const f = Math.min(Math.abs(v) * 2.4, 0.8);
+    scaleX.set(1.2 + f);
+    scaleY.set(0.8 - f * 0.4);
+    lastX.current = clientX;
+    lastT.current = now;
+  };
+
+  const snap = () => {
+    const current = x.get();
+    const index = Math.round((current + indicatorWidth / 2 - tabWidth / 2) / tabWidth);
+    const clamped = Math.max(0, Math.min(index, tabs.length - 1));
+    onTabChange(tabs[clamped].id);
+  };
 
   return (
-    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
+    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-full max-w-xs z-50 px-4">
       <div
         ref={containerRef}
-        className="glass-pill rounded-full px-2 py-2 flex items-center gap-1 ios-shadow select-none"
-        onTouchStart={(e) => handleDragStart(e.touches[0].clientX)}
-        onTouchEnd={(e) => handleDragEnd(e.changedTouches[0].clientX)}
-        onMouseDown={(e) => handleDragStart(e.clientX)}
-        onMouseUp={(e) => handleDragEnd(e.clientX)}
-        style={{ cursor: isDragging ? "grabbing" : "grab" }}
+        className="relative w-full h-14 rounded-full glass-pill ios-shadow touch-none overflow-hidden flex items-center select-none"
+        onPointerDown={(e) => {
+          setIsDragging(true);
+          scaleX.set(1.3);
+          scaleY.set(0.7);
+          lastX.current = e.clientX;
+          lastT.current = performance.now();
+          setFromClientX(e.clientX);
+        }}
+        onPointerMove={(e) => {
+          if (!isDragging) return;
+          setFromClientX(e.clientX);
+          wobble(e.clientX);
+        }}
+        onPointerUp={() => {
+          setIsDragging(false);
+          scaleX.set(1);
+          scaleY.set(1);
+          snap();
+        }}
+        onPointerCancel={() => {
+          setIsDragging(false);
+          scaleX.set(1);
+          scaleY.set(1);
+          snap();
+        }}
       >
-        {tabs.map((tab) => {
-          const isActive = activeTab === tab.id;
-          return (
-            <button
-              key={tab.id}
-              onClick={() => !isDragging && onTabChange(tab.id)}
-              className={`
-                flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-medium
-                transition-all duration-300 ease-out tap-bounce
-                ${isActive
-                  ? "glass-pill-active ios-shadow-sm"
-                  : "text-muted-foreground hover:text-foreground"
-                }
-              `}
-            >
-              <tab.icon className="w-4 h-4" />
-              {isActive && (
-                <span className="animate-scale-in text-xs font-semibold">
-                  {tab.label}
-                </span>
-              )}
-            </button>
-          );
-        })}
+        {/* Wobble Indicator */}
+        <motion.div
+          className={`absolute rounded-full z-40 ${
+            isDragging ? "bg-primary/80" : "bg-primary"
+          }`}
+          style={{
+            width: indicatorWidth,
+            height: indicatorHeight,
+            left: 0,
+            top: "50%",
+            y: "-50%",
+            x: springX,
+            scaleX: springScaleX,
+            scaleY: springScaleY,
+            originY: "center",
+          }}
+        />
+
+        {/* Icons + Labels */}
+        <div
+          className="absolute inset-0 z-50 pointer-events-none items-center"
+          style={{ display: "grid", gridTemplateColumns: `repeat(${tabs.length}, 1fr)` }}
+        >
+          {tabs.map((t) => {
+            const Icon = t.icon;
+            const active = t.id === activeTab;
+            return (
+              <div key={t.id} className="flex justify-center items-center gap-1.5">
+                <Icon
+                  className={active ? "text-primary-foreground" : "text-muted-foreground"}
+                  size={active ? 18 : 20}
+                  strokeWidth={active ? 2.5 : 1.5}
+                />
+                {active && !isDragging && (
+                  <motion.span
+                    initial={{ opacity: 0, width: 0 }}
+                    animate={{ opacity: 1, width: "auto" }}
+                    exit={{ opacity: 0, width: 0 }}
+                    className="text-primary-foreground text-[11px] font-semibold whitespace-nowrap overflow-hidden"
+                  >
+                    {t.label}
+                  </motion.span>
+                )}
+              </div>
+            );
+          })}
+        </div>
       </div>
     </div>
   );
