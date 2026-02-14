@@ -1,5 +1,5 @@
 import { useRef, useState, useEffect } from "react";
-import { motion, useMotionValue, useSpring } from "framer-motion";
+import { motion, useMotionValue, useSpring, AnimatePresence } from "framer-motion";
 import { Radio, BarChart3, Settings, LucideProps } from "lucide-react";
 
 type Tab = "channels" | "analytics" | "settings";
@@ -26,12 +26,15 @@ export const BottomNav = ({ activeTab, onTabChange }: BottomNavProps) => {
   const [width, setWidth] = useState(280);
   const [isDragging, setIsDragging] = useState(false);
 
-  const indicatorWidth = 52;
-  const indicatorHeight = 38;
+  // Dynamic indicator width: wider when showing label, narrower when dragging
+  const indicatorWidthIdle = 80;
+  const indicatorWidthDrag = 44;
+  const currentIndicatorWidth = isDragging ? indicatorWidthDrag : indicatorWidthIdle;
+  const indicatorHeight = 40;
   const tabWidth = width / tabs.length;
   const activeIndex = tabs.findIndex((t) => t.id === activeTab);
 
-  const x = useMotionValue(activeIndex * tabWidth + tabWidth / 2 - indicatorWidth / 2);
+  const x = useMotionValue(activeIndex * tabWidth + tabWidth / 2 - currentIndicatorWidth / 2);
   const springX = useSpring(x, { stiffness: 800, damping: 45 });
 
   const scaleX = useMotionValue(1);
@@ -53,16 +56,16 @@ export const BottomNav = ({ activeTab, onTabChange }: BottomNavProps) => {
 
   useEffect(() => {
     if (!isDragging) {
-      x.set(activeIndex * tabWidth + tabWidth / 2 - indicatorWidth / 2);
+      x.set(activeIndex * tabWidth + tabWidth / 2 - currentIndicatorWidth / 2);
     }
-  }, [activeIndex, isDragging, tabWidth, x]);
+  }, [activeIndex, isDragging, tabWidth, x, currentIndicatorWidth]);
 
   const setFromClientX = (clientX: number) => {
     if (!containerRef.current) return;
     const rect = containerRef.current.getBoundingClientRect();
     const local = clientX - rect.left;
-    const max = width - indicatorWidth;
-    x.set(Math.max(0, Math.min(local - indicatorWidth / 2, max)));
+    const max = width - currentIndicatorWidth;
+    x.set(Math.max(0, Math.min(local - currentIndicatorWidth / 2, max)));
   };
 
   const wobble = (clientX: number) => {
@@ -78,7 +81,7 @@ export const BottomNav = ({ activeTab, onTabChange }: BottomNavProps) => {
 
   const snap = () => {
     const current = x.get();
-    const index = Math.round((current + indicatorWidth / 2 - tabWidth / 2) / tabWidth);
+    const index = Math.round((current + currentIndicatorWidth / 2 - tabWidth / 2) / tabWidth);
     const clamped = Math.max(0, Math.min(index, tabs.length - 1));
     onTabChange(tabs[clamped].id);
   };
@@ -116,11 +119,9 @@ export const BottomNav = ({ activeTab, onTabChange }: BottomNavProps) => {
       >
         {/* Wobble Indicator */}
         <motion.div
-          className={`absolute rounded-full z-40 ${
-            isDragging ? "bg-primary/80" : "bg-primary"
-          }`}
+          className="absolute rounded-full z-40 bg-primary"
           style={{
-            width: indicatorWidth,
+            width: currentIndicatorWidth,
             height: indicatorHeight,
             left: 0,
             top: "50%",
@@ -130,6 +131,8 @@ export const BottomNav = ({ activeTab, onTabChange }: BottomNavProps) => {
             scaleY: springScaleY,
             originY: "center",
           }}
+          layout
+          transition={{ type: "spring", stiffness: 500, damping: 30 }}
         />
 
         {/* Icons + Labels */}
@@ -141,22 +144,26 @@ export const BottomNav = ({ activeTab, onTabChange }: BottomNavProps) => {
             const Icon = t.icon;
             const active = t.id === activeTab;
             return (
-              <div key={t.id} className="flex justify-center items-center gap-1.5">
+              <div key={t.id} className="flex justify-center items-center gap-1.5 h-full">
                 <Icon
                   className={active ? "text-primary-foreground" : "text-muted-foreground"}
-                  size={active ? 18 : 20}
+                  size={active && !isDragging ? 16 : 20}
                   strokeWidth={active ? 2.5 : 1.5}
                 />
-                {active && !isDragging && (
-                  <motion.span
-                    initial={{ opacity: 0, width: 0 }}
-                    animate={{ opacity: 1, width: "auto" }}
-                    exit={{ opacity: 0, width: 0 }}
-                    className="text-primary-foreground text-[11px] font-semibold whitespace-nowrap overflow-hidden"
-                  >
-                    {t.label}
-                  </motion.span>
-                )}
+                <AnimatePresence>
+                  {active && !isDragging && (
+                    <motion.span
+                      key="label"
+                      initial={{ opacity: 0, width: 0 }}
+                      animate={{ opacity: 1, width: "auto" }}
+                      exit={{ opacity: 0, width: 0 }}
+                      transition={{ duration: 0.2 }}
+                      className="text-primary-foreground text-[11px] font-semibold whitespace-nowrap overflow-hidden"
+                    >
+                      {t.label}
+                    </motion.span>
+                  )}
+                </AnimatePresence>
               </div>
             );
           })}
